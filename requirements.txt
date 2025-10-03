@@ -1,0 +1,6 @@
+colorama==0.4.6
+pandas==2.3.3
+py_dss_interface==2.1.0
+py_dss_toolkit==0.2.0
+PyYAML==6.0.3
+pyarrow==21.0.0

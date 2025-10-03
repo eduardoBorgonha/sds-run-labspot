@@ -1,0 +1,3 @@
+circuit_base_path: "circuit_models"
+
+results_base_path: "data/raw"
