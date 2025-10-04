@@ -29,7 +29,7 @@ def add_datetime_index_to_results(
                                  com um DatetimeIndex.
     """
     if not results_dict:
-        print("Dicionário de resultados está vazio")
+        print("Warning: Results dictionary is empty.")
         return{}
     #pegando tamanho:
     any_df = next(iter(results_dict.values()))
@@ -48,7 +48,7 @@ def add_datetime_index_to_results(
     )
     #novo dict:
     timestamped_results = {}
-    print(f"Adicionando DatetimeIndex a {len(results_dict)} DataFrames...")
+    print(f"  - Adding DatetimeIndex to {len(results_dict)} DataFrames...")
     for name, df in results_dict.items():
         df_copy = df.copy()
 
@@ -61,6 +61,6 @@ def add_datetime_index_to_results(
         #adicionando o índice de tempo:
         df_copy.index = datetime_index
         timestamped_results[name] = df_copy
-        print(f"  -Preparado: {name}")
+        print(f"  -Prepared: {name}")
 
     return timestamped_results

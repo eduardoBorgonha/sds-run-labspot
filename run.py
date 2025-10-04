@@ -11,7 +11,7 @@ def main():
     parser.add_argument(
         "scenario",
         type=str, 
-        help="The simulation start scenatio (e.g., 'base_timeseries')")
+        help="The name of the simulation scenario (e.g., 'base_timeseries'")
     parser.add_argument(
         "start_date",
         type=str ,

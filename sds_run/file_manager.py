@@ -27,7 +27,7 @@ def get_dss_master_file_path(
     
     # Inicia a construção do caminho comum
     circuit_path = os.path.join(
-        circuit_base_path, city, subregion, year, "scenarios", 
+        circuit_base_path, year, city, subregion, "scenarios", 
         scenario, "opendss"
     )
     

@@ -16,8 +16,13 @@ def change_dir(destination):
 
 def simulate(dss: py_dss_interface.DSS, dss_file_path: str, start_hour: int, n_points: int):
     """
-    Compila e simula o circuito DSS para o cenário informado. Por padrão resolve para 1 dia com stepsize de 15m. Begin é a hora em que começa a simulação, a.
-    Retorna o objeto dss já simulado.
+    Sets up and runs the OpenDSS simulation for a given scenario.
+
+    Args:
+    dss: An initialized instance of the py_dss_interface.DSS object.
+    dss_file_path: The full path to the Master.dss file to be compiled.
+    start_hour: The hour of the year at which the simulation starts.
+    n_points: The total number of 15-minute steps to simulate.
     """
     spinner = Spinner(f"Compiling OpenDSS model: {os.path.basename(dss_file_path)}")
     spinner.start()
@@ -28,10 +33,10 @@ def simulate(dss: py_dss_interface.DSS, dss_file_path: str, start_hour: int, n_p
             dss.text(f"compile [{dss_file_path}]")
         finally:
             spinner.stop()
-        print("  - Model compiles sucessfully.")
-        print(f"Simulation defined for yearly, stepsize: 15m, beginning  at {start_hour}h with {n_points} points.")
+        print("  - Model compiled sucessfully.")
+        print(f"Simulation set for yearly mode, stepsize: 15m, starting at hour {start_hour} with {n_points} points.")
         dss.text(f"set hour={start_hour}")
         dss.text(f"set mode=yearly stepsize=15m number={n_points}")
-        print("Simulating...")
+        print("  - Running simulation...")
         dss.text(f"solve")
-        print(Fore.GREEN + "Simulation Completed")
+        print(f"  - {Fore.GREEN}Simulation completed successfully.")
