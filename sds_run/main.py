@@ -6,8 +6,9 @@ from py_dss_toolkit import dss_tools
 import os
 from sds_run.utils import convert_date_to_simulation_time
 from sds_run.file_manager import get_dss_master_file_path, save_results_as_parquet
-from sds_run.simulation import simulate
-from sds_run.processing import get_monitor_results, add_datetime_index_to_results
+from sds_run.simulation import simulate_dynamic
+from sds_run.processing import get_monitor_results, add_datetime_index_to_results, convert_bus_results_to_dataframes, convert_power_result_to_dataframe
+
 
 def main_pipeline(args: argparse.Namespace, config: Dict):
     """
@@ -37,6 +38,10 @@ def main_pipeline(args: argparse.Namespace, config: Dict):
         
         print(f"\n{Fore.YELLOW}Preparing simulation parameters...")
         
+        user_required_results = config.copy()
+        user_required_results.pop('circuit_base_path')
+        user_required_results.pop('results_base_path')
+
         start_hour, n_points = convert_date_to_simulation_time(args.start_date, args.days)
         year = args.start_date[:4]
 
@@ -57,35 +62,47 @@ def main_pipeline(args: argparse.Namespace, config: Dict):
         )
         print(f"  - DSS file found at: {dss_file}")
 
+
         # --- 3. RUN SIMULATION ---
         print(f"\n{Fore.YELLOW}Initializing and running OpenDSS simulation...")
-        
+       
         dss = py_dss_interface.DSS()
         dss_tools.update_dss(dss)
-        simulate(
+        buses_results_dict, powers_result_list = simulate_dynamic(
             dss=dss,
             dss_file_path=dss_file,
             start_hour=start_hour,
-            n_points=n_points
+            n_points=n_points, 
+            requires_results=user_required_results
         )
         print(f"  - Simulation completed successfully.")
 
         print(f"\n{Fore.YELLOW}Processing simulation results...")
-        
-        raw_results = {}
-        for name in dss.monitors.names:
-            raw_results[name] = dss_tools.results.monitor(name)
-        
-        processed_results = add_datetime_index_to_results(
-            results_dict=raw_results,
+
+        print('breakpoint')
+
+        df_dict_buses = convert_bus_results_to_dataframes(buses_results_dict)
+        df_powers = convert_power_result_to_dataframe(powers_result_list)
+       
+        results_dict = df_dict_buses
+        results_dict["power"] = df_powers
+
+        print("breakpoint")
+
+        results_time_stamped = add_datetime_index_to_results(
+            results_dict=results_dict,
             start_date_str=args.start_date
         )
+       
+        print("breakpoint")
+
         print(f"  - Results processed and timestamped.")
+        
         
         # --- 5. SAVE RESULTS ---
         print(f"\n{Fore.YELLOW}Saving results to Parquet files...")
         save_results_as_parquet(
-            results_dict=processed_results,
+            results_dict=results_time_stamped,
             saving_dir=saving_path,
             year=year,
             scenario=args.scenario,

@@ -1,3 +1,9 @@
 circuit_base_path: "circuit_models"
 
 results_base_path: "data/raw"
+
+transformers: ["tr(r:p13udt18508-p13udt18508lv)", "tr(r:p13udt13208-p13udt13208lv)"]
+
+buses: ["p13udt18199lv", "p13udt18960lv"]
+
+pvsystems: ["pv_load_p13umv66", "pv_load_p13ulv43340"]
