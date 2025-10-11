@@ -3,7 +3,7 @@ from contextlib import contextmanager
 import py_dss_interface
 from colorama import Fore
 from sds_run.utils import Spinner
-from sds_run.query_handler import get_buses_results, get_pvsystems_results, get_transformers_results, get_power_result
+from sds_run.query_handler import get_buses_results, get_power_result
 from typing import Dict
 
 @contextmanager

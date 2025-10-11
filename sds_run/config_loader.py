@@ -16,7 +16,7 @@ def load_config(config_path: str = 'config.yaml') -> Dict:
         raise ValueError(f'Error: The config file {config_path} is empty')
     
     # Verifying if the keys for the application are there
-    required_keys = ['circuit_base_path', 'results_base_path', 'transformers', 'buses', 'pvsystems']
+    required_keys = ['circuit_base_path', 'results_base_path', 'buses']
     for key in required_keys:
         if key not in config:
             raise ValueError(f'Error: The key {key} was not found in {config_path}')

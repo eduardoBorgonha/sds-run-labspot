@@ -68,6 +68,7 @@ def main_pipeline(args: argparse.Namespace, config: Dict):
        
         dss = py_dss_interface.DSS()
         dss_tools.update_dss(dss)
+        #opendss simularion here:
         buses_results_dict, powers_result_list = simulate_dynamic(
             dss=dss,
             dss_file_path=dss_file,
@@ -79,25 +80,19 @@ def main_pipeline(args: argparse.Namespace, config: Dict):
 
         print(f"\n{Fore.YELLOW}Processing simulation results...")
 
-        print('breakpoint')
-
         df_dict_buses = convert_bus_results_to_dataframes(buses_results_dict)
+
         df_powers = convert_power_result_to_dataframe(powers_result_list)
        
         results_dict = df_dict_buses
         results_dict["power"] = df_powers
-
-        print("breakpoint")
 
         results_time_stamped = add_datetime_index_to_results(
             results_dict=results_dict,
             start_date_str=args.start_date
         )
        
-        print("breakpoint")
-
         print(f"  - Results processed and timestamped.")
-        
         
         # --- 5. SAVE RESULTS ---
         print(f"\n{Fore.YELLOW}Saving results to Parquet files...")
