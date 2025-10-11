@@ -2,4 +2,8 @@ circuit_base_path: "circuit_models"
 
 results_base_path: "data/raw"
 
+#(OPTIONAL) 
+enable_opendss_monitors: false
+
+#(OPTIONAL) Buses for dynamic monitoring
 buses: ["p13udt18199lv", "p13udt18960lv"]

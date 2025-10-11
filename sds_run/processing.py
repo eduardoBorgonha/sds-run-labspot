@@ -12,9 +12,21 @@ PHASE_COLUMN_MAP: Dict[int, List[str]] = {
 POWER_COLUMN_MAP: List[str] = ['P_1', 'Q_1', 'P_2', 'Q_2', 'P_3', 'Q_3']
 
 def get_monitor_results(dss: py_dss_interface.DSS , dss_tools) -> Dict[str, pd.DataFrame]:
+    """
+    """
+    #checking if are there monitors:
+    monitors = dss.monitors.names
+    if not monitors:
+        print("   - No OpenDSS monitors found in the circuit.")
+        return {}
+    
     results_dict = {}
     for name in dss.monitors.names:
-        results_dict[name] = dss_tools.results.monitor(name)
+        monitor_df = dss_tools.results.monitor(name)
+        monitor_df = monitor_df.drop(columns=['Hour', 'sec'], errors='ignore')
+        monitor_df.columns = monitor_df.columns.str.strip() 
+        results_dict[name] = monitor_df
+
     return results_dict
 
 def add_datetime_index_to_results(
@@ -59,19 +71,12 @@ def add_datetime_index_to_results(
     for name, df in results_dict.items():
         df_copy = df.copy()
 
-        #removendo as colunas "Hour" e "sec"
-        cols_to_drop = ['Hour', 'sec']
-        df_copy = df_copy.drop(columns=cols_to_drop, errors='ignore')
-
-        #tirando o espaço dos axes:
-        df_copy.columns = df_copy.columns.str.strip()
         #adicionando o índice de tempo:
         df_copy.index = datetime_index
         timestamped_results[name] = df_copy
         print(f"  -Prepared: {name}")
 
     return timestamped_results
-
 
 def convert_bus_results_to_dataframes(
     buses_results_dict: Dict[str, List[List[float]]]
@@ -110,26 +115,24 @@ def convert_bus_results_to_dataframes(
 
     return dataframes_dict
 
-def convert_power_result_to_dataframe(results_list: List[List[float]]):
+def convert_source_powers_to_dataframes(
+    source_powers_results_dict: Dict[str, List[List[float]]]
+) -> Dict[str, pd.DataFrame]:
     """
-    Converts a list of power results into a pandas DataFrame with labeled columns.
-    
-    Args:
-        results_list (List[List[float]]): List of lists containing power measurements
-                                         Each inner list should have 6 values [P1,Q1,P2,Q2,P3,Q3]
-    
-    Returns:
-        pd.DataFrame: DataFrame with columns ['P_1', 'Q_1', 'P_2', 'Q_2', 'P_3', 'Q_3']
+    Converts a dictionary of power results from multiple sources into
+    a dictionary of pandas DataFrames.
+    """
+    dataframes_dict = {}
+    if not source_powers_results_dict:
+        return dataframes_dict
+
+    for source_name, results_list in source_powers_results_dict.items():
+        if any(len(row) != 6 for row in results_list):
+            raise ValueError(f"Each power measurement for source '{source_name}' must contain 6 values.")
         
-    Raises:
-        ValueError: If any row in results_list doesn't have exactly 6 values
-    """
-    if not results_list:
-        return pd.DataFrame(columns=POWER_COLUMN_MAP)
-    # Validate input data
-    if any(len(row) != 6 for row in results_list):
-        raise ValueError("Each power measurement must contain exactly 6 values (P1,Q1,P2,Q2,P3,Q3)")
-    # Create DataFrame with predefined column names
-    df = pd.DataFrame(data=results_list, columns=POWER_COLUMN_MAP)
-    df = df.astype(float)
-    return df
+        df = pd.DataFrame(data=results_list, columns=POWER_COLUMN_MAP)
+        df = df.astype(float)
+        # Adiciona um sufixo para evitar conflito de nomes com outros resultados
+        dataframes_dict[f"power_{source_name}"] = df
+        
+    return dataframes_dict

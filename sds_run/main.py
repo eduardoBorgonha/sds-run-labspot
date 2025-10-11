@@ -7,7 +7,7 @@ import os
 from sds_run.utils import convert_date_to_simulation_time
 from sds_run.file_manager import get_dss_master_file_path, save_results_as_parquet
 from sds_run.simulation import simulate_dynamic
-from sds_run.processing import get_monitor_results, add_datetime_index_to_results, convert_bus_results_to_dataframes, convert_power_result_to_dataframe
+from sds_run.processing import get_monitor_results, add_datetime_index_to_results, convert_bus_results_to_dataframes, convert_source_powers_to_dataframes
 
 
 def main_pipeline(args: argparse.Namespace, config: Dict):
@@ -68,24 +68,29 @@ def main_pipeline(args: argparse.Namespace, config: Dict):
        
         dss = py_dss_interface.DSS()
         dss_tools.update_dss(dss)
-        #opendss simularion here:
-        buses_results_dict, powers_result_list = simulate_dynamic(
+        #opendss simulation here:
+        buses_results_dict, source_powers_dict = simulate_dynamic(
             dss=dss,
             dss_file_path=dss_file,
             start_hour=start_hour,
             n_points=n_points, 
-            requires_results=user_required_results
+            config=config
         )
-        print(f"  - Simulation completed successfully.")
+        print(f"  - {Fore.GREEN}Simulation completed successfully.")
 
         print(f"\n{Fore.YELLOW}Processing simulation results...")
 
+        #processing dynamic results...
         df_dict_buses = convert_bus_results_to_dataframes(buses_results_dict)
-
-        df_powers = convert_power_result_to_dataframe(powers_result_list)
+        df_dict_powers = convert_source_powers_to_dataframes(source_powers_dict)
        
+       #unifying to a single dict:
         results_dict = df_dict_buses
-        results_dict["power"] = df_powers
+        results_dict.update(df_dict_powers)
+
+        if config.get('enable_opendss_monitors', False):
+            monitor_results_dict = get_monitor_results(dss, dss_tools)
+            results_dict.update(monitor_results_dict)
 
         results_time_stamped = add_datetime_index_to_results(
             results_dict=results_dict,
