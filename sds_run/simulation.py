@@ -55,7 +55,7 @@ def simulate_dynamic(
             if buses_to_monitor:
                 get_buses_results(dss, config['buses'], buses_results_dict)
 
-                get_source_power_results(dss, sources_power_result_dict)
+            get_source_power_results(dss, sources_power_result_dict)
 
             if((i+ 1)%96 == 0):
                 print(f"   -Step {i+1}")
