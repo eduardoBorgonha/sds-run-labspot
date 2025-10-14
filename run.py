@@ -2,6 +2,7 @@ import argparse
 from sds_run.config_loader import load_config
 from sds_run.main import main_pipeline
 from colorama import init
+from datetime import datetime, timedelta
 
 def main():
 
@@ -22,7 +23,7 @@ def main():
         help="The number of days to simulate."
     )
     
-    # --- Argumentos Opcionais (com valores padrão) ---
+    # --- Optional ---
     parser.add_argument(
         "-c", "--city", 
         type=str, 
@@ -50,9 +51,27 @@ def main():
 
     args = parser.parse_args()
 
-    #validação lógica dos argumentos:
+    #logic validation from the arguments:
     if args.feeder and not args.substation:
         parser.error("The --feeder argument requires the --substation argument to be specified.")
+    
+    if args.days <= 0:
+        parser.error("The --days argumnt of days must be an integer, positive and greater than 0.")
+
+    try:
+        start_date_obj = datetime.strptime(args.start_date, '%Y-%m-%d')
+    except ValueError:
+        raise ValueError(
+            f"Invalid Format: '{args.start_date}'. "
+            "Use YYYY-MM-DD.")
+    
+    end_date = start_date_obj + timedelta(days=(args.days)-1)
+
+    if start_date_obj.year != end_date.year:
+        raise ValueError(
+            f"Simulation Period Invalid. It ends in the next Year."
+        )
+    
     try:
         # Load configuration from the YAML file
         config = load_config('config.yaml')

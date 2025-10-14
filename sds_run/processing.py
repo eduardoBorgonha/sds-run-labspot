@@ -13,6 +13,16 @@ POWER_COLUMN_MAP: List[str] = ['P_1', 'Q_1', 'P_2', 'Q_2', 'P_3', 'Q_3']
 
 def get_monitor_results(dss: py_dss_interface.DSS , dss_tools) -> Dict[str, pd.DataFrame]:
     """
+     Extracts data from all monitors in the active OpenDSS circuit.
+
+    Args:
+        dss (py_dss_interface.DSS): The py-dss-interface DSS object.
+        dss_tools: The py-dss-toolkit object.
+
+    Returns:
+        Dict[str, pd.DataFrame]: A dictionary where keys are monitor names
+                                 and values are DataFrames containing the
+                                 monitor's results.
     """
     #checking if are there monitors:
     monitors = dss.monitors.names
@@ -82,6 +92,23 @@ def convert_bus_results_to_dataframes(
     buses_results_dict: Dict[str, List[List[float]]]
 ) -> Dict[str, pd.DataFrame]:
     """
+    Converts a dictionary of bus voltage results (magnitude and angle) into
+    a dictionary of pandas DataFrames. Column names are dynamically assigned
+    based on the number of phases detected in the results.
+
+    Args:
+        buses_results_dict (Dict[str, List[List[float]]]): A dictionary where keys
+            are bus names and values are lists of lists, with each inner list
+            containing voltage magnitudes and angles for each time step.
+
+    Returns:
+        Dict[str, pd.DataFrame]: A dictionary where keys are bus names and
+                                 values are pandas DataFrames with structured
+                                 columns for voltage and angle per phase.
+
+    Raises:
+        ValueError: If an unexpected number of columns (not 2, 4, or 6) is
+                    found in the results for a bus.
     """
     dataframes_dict = {}
     if not buses_results_dict:

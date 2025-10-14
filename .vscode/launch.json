@@ -20,8 +20,8 @@
             "console": "integratedTerminal",
             "args": [
                 "solar_medium_batteries_none_timeseries",
-                "2017-05-22",
-                "5",
+                "2017-01-1",
+                "10",
                 "-c",
                 "SFO",
                 "-sr",
