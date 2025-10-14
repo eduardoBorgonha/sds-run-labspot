@@ -2,16 +2,28 @@
 
 `sds-run` is a command-line interface (CLI) tool developed in Python to orchestrate quasi-static time series (QSTS) power flow simulations. It uses the circuit models from the [SMART-DS dataset](https://data.openei.org/s3_viewer?bucket=oedi-data-lake&prefix=SMART-DS%2F) and the OpenDSS engine.
 
-> This tool was developed as part of a scientific initiation project at the **LABSPOT** laboratory at the Federal University of Santa Catarina (UFSC), Brazil.
+> This tool is the result of a scientific initiation project conducted at the [LABSPOT](https://labspot.paginas.ufsc.br/) laboratory at the Federal University of Santa Catarina (UFSC), Brazil. The research was carried out by Electrical Engineering undergraduate Eduardo Borgonha Lopes, advised by Professor Miguel Moreto. 
+<p align="center">
+<img src="https://labspot.paginas.ufsc.br/files/2018/10/cropped-Imagem2.png" width="150">
+</p>
 
 The tool allows engineers to run simulations in a fast and reproducible manner, saving opendss monitor results to Parquet files for easy subsequent analysis.
 
 ## Features
 
--   Execution of simulations at different levels of granularity: sub-region, substation, or individual feeder.
--   External configuration via a `config.yaml` file for easy portability.
--   Automatic saving of results in Parquet format, organized into a logical folder structure.
--   Visual feedback in the terminal.
+-   **🎯 Granular Simulation Control:** Execute simulations at any level of the SMART-DS hierarchy, from a broad **sub-region** down to a specific **substation** or an individual **feeder**.
+
+-   **🔧 Hybrid Monitoring System:**
+    -   **Dynamic Bus Monitoring:** Specify any number of buses in the `config.yaml` to dynamically capture their per-unit voltage and angle at every time step.
+    -   **Native Monitor Support:** Automatically extract and save the complete output from all `Monitor` objects defined within the OpenDSS circuit files.
+
+-   **⚙️ Portable & Reproducible Workflow:**
+    -   **External Configuration:** All simulation paths and monitoring options are managed via a simple `config.yaml` file, making it easy to share and reproduce setups.
+    -   **Structured Parquet Output:** Results are automatically saved in the efficient Parquet format, indexed by timestamp and organized into a logical folder structure based on the simulation parameters.
+
+-   **🖥️ User-Friendly Interface:**
+    -   **Clear CLI Arguments:** A straightforward command-line interface makes it easy to define the scenario, date range, and simulation scope.
+    -   **Live Terminal Feedback:** Get real-time progress updates during the simulation, so you always know what the tool is doing.
 
 ## Getting Started
 
@@ -20,6 +32,7 @@ Follow the steps below to set up and run the `sds-run` tool.
 ### Prerequisites
 
 -   Python 3.8+
+-   Windows Machine
 -   Access to a terminal or command line (cmd, PowerShell, bash, etc.).
 -   Git installed on your system.
 -   The [SMART-DS circuit models](https://data.openei.org/s3_viewer?bucket=oedi-data-lake&prefix=SMART-DS%2F) downloaded to your local machine.
@@ -97,23 +110,48 @@ The following two commands will download the `p13uhs0_1247--p13udt13213` feeder 
 
 ### Configuration
 
-The tool needs to know where the circuit models are located and where to save the simulation results.
+For the tool to work correctly, it needs to know where the circuit models are located and where to save the simulation results. This is managed through a `config.yaml` file in the project's root directory.
 
 1.  **Create the Configuration File**
     If it doesn't exist, create a `config.yaml` file in the root of the project. A template is provided in the repository.
 
-2.  **Edit the Paths**
-    Open `config.yaml` and edit the paths to point to the correct locations on your machine. **Using absolute paths is highly recommended for robust operation.**
+2.  **Edit the Settings**
+    Open `config.yaml` the keys according to your environment and simulation needs.
 
-    **Example `config.yaml`:**
-    ```yaml
-    # Path to the base folder containing the SMART-DS circuit models.
-    circuit_base_path: "C:/Users/YourUser/Documents/SMART-DS_Models"
+##### Path Parameters (Required)
 
-    # Path to the base folder where simulation results will be saved.
-    results_base_path: "C:/Users/YourUser/Documents/sds-run-results"
-    ```
+-   `circuit_base_path`: The path to the main folder containing the SMART-DS circuit models.
+-   `results_base_path`: The path to the main folder where all simulation results will be saved.
 
+**Recommendation:** Using absolute paths is highly recommended to prevent errors, regardless of where you run the script from.
+
+##### Monitoring Options (Optional)
+
+The tool offers two ways to extract data from the simulation, which can be used separately or together.
+
+-   `enable_opendss_monitors`: If set to `true`, the tool will extract data from **all `Monitor` objects** defined in the circuit's `.dss` files. If this key is omitted or set to `false`, this feature is disabled.
+-   `buses`: Enables dynamic voltage monitoring for specific buses. To use it, provide a list of the exact names of the buses you wish to monitor. If this key is omitted or the list is empty, this feature is disabled.
+
+### Complete `config.yaml` Example
+
+```yaml
+# 1. PATH PARAMETERS (REQUIRED)
+# Path to the base folder containing the SMART-DS circuit models.
+# Example Windows: "C:/Users/YourUser/Documents/smart-ds-models"
+circuit_base_path: "circuit_models"
+# Path to the base folder where simulation results will be saved.
+results_base_path: "data/raw"
+
+# 2. MONITORING OPTIONS (OPTIONAL)
+# Set to 'true' to extract data from all OpenDSS monitors defined
+# in the circuit files. Defaults to 'false' if omitted.
+enable_opendss_monitors: true
+# Provide a list of bus names to dynamically monitor their voltages.
+# This feature is disabled if the key is omitted or the list is empty.
+buses: 
+  - "p13udt18199lv"
+  - "p13udt18960lv"
+```
 ## Usage
 
 The tool is executed via the `run.py` script. The basic command structure is as follows:
@@ -145,11 +183,32 @@ python run.py base_timeseries 2018-01-15 1 --substation p13uhs0_1247
 ```
 
 ## Output Structure
-Results will be saved within the results_base_path defined in your config.yaml, following the structure:
-`<results_base_path>/<year>/<scenario>/<simulation_scope>/run_<date>_<days>_days/`
-- `<simulation_scope>` will be the name of the feeder, substation, or sub-region, depending on the simulation level.
 
-Inside the final folder, each monitor from the circuit will have its results saved in a separate .parquet file.
+The simulation results are saved inside the `results_base_path` you define in your `config.yaml`. The tool creates a structured hierarchy of folders to keep runs organized and easy to find.
+
+### Directory Hierarchy
+
+The general structure for a simulation run is as follows:
+
+```
+<results_base_path>/<year>/<scenario>/<simulation_scope>/run_<start_date>_<days>_days/
+```
+
+-   `<results_base_path>`: The main directory for all outputs, as defined in `config.yaml`.
+-   `<year>`: The year of the simulation (e.g., `2017`).
+-   `<scenario>`: The scenario name used for the run (e.g., `solar_medium_batteries_none_timeseries`).
+-   `<simulation_scope>`: This folder's name changes depending on the most specific level of the grid you simulated. It will be the feeder name, substation name, or sub-region name.
+-   `run_<start_date>_<days>_days`: This is the final folder containing the results for a specific execution, timestamped with the start date and duration.
+
+### Output Files
+
+Inside the final `run_...` directory, the tool saves the collected data in the efficient **Parquet** format. All files are indexed with a **proper DatetimeIndex**, making them immediately ready for time series analysis.
+
+You can expect the following files, depending on your configuration:
+
+-   `power_<source_name>.parquet`: A file for each source (`Vsource`) in the circuit, containing the three-phase active (P) and reactive (Q) power measurements for each time step.
+-   `<bus_name>.parquet`: If you specified a list of buses in `config.yaml`, a separate file will be created for each bus, containing the phase voltage magnitude and angle for each phase at every time step.
+-   `<monitor_name>.parquet`: If `enable_opendss_monitors` was set to `true`, a file will be created for each `Monitor` object found in the OpenDSS circuit. The columns in these files will match the original OpenDSS monitor output, ready for detailed post-processing.
 
 ## Acknowledgments and Citation
 
@@ -164,9 +223,11 @@ This tool is designed to work with the Synthetic Models for Advanced, Realistic 
 
 The core functionality of this tool relies heavily on the work of Paulo Radatz and his powerful libraries for interacting with the OpenDSS engine.
 
-    Radatz, P. (2025). py-dss-interface: A Python package that interfaces with OpenDSS powered by EPRI (Version X.X.X) [Computer software]. GitHub. https://github.com/PauloRadatz/py_dss_interface
+-   **`py-dss-interface`:**
+    > Radatz, P. (2025). *py-dss-interface: A Python package that interfaces with OpenDSS powered by EPRI* (Version 2.1.0) [Computer software]. GitHub. https://github.com/PauloRadatz/py_dss_interface
 
-These tools were fundamental to the creation of `sds-run`.
+-   **`py-dss-toolkit`:**
+    > Radatz, P. (2025). *py-dss-toolkit: Advanced Python Tools for OpenDSS powered by EPRI* (Version 0.2.0) [Computer software]. GitHub. https://github.com/PauloRadatz/py_dss_toolkit
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for more details.
